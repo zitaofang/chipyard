@@ -87,8 +87,7 @@ $(output_dir)/.dummy:
 bmarks_dir=$(base_dir)/test/riscv-bmarks
 
 bmarks = \
-	vvadd \
-	matmul
+	vvadd
 
 $(addprefix $(bmarks_dir)/,$(addsuffix .riscv,$(bmarks))): $(wildcard $(addprefix $(bmarks_dir)/,$(addsuffix /*,$(bmarks))))
 	$(MAKE) -C $(bmarks_dir)

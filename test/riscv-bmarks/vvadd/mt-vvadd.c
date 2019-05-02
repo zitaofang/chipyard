@@ -49,21 +49,6 @@ void thread_entry(int cid, int nc)
    // static allocates data in the binary, which is visible to both threads
    static data_t results_data[DATA_SIZE];
    
-   // First do unoptimized vvadd
-   barrier(nc);
-   stats(vvadd(cid, nc, DATA_SIZE, input1_data, input2_data, results_data); barrier(nc), DATA_SIZE);
- 
-   if(cid == 0) {
-     int res = verifyDouble(DATA_SIZE, results_data, verify_data);
-
-     if(res) printf("Naive vvadd: FAIL\n");
-     else printf("Naive vvadd: SUCCESS\n");
-
-     // clear out results_data for next run
-     for (int i = 0; i < DATA_SIZE; i++)
-       results_data[i] = 0.0;
-   }
-
    barrier(nc);
    stats(vvadd_opt(cid, nc, DATA_SIZE, input1_data, input2_data, results_data); barrier(nc), DATA_SIZE);
 
