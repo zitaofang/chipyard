@@ -22,6 +22,10 @@ import firesim.bridges._
 import firesim.util.{WithNumNodes}
 import firesim.configs._
 
+class WithBackingScratchpad extends Config((site, here, up) => {
+  case BackingScratchpadKey => Some(BackingScratchpadParams(BigInt(0x80000000), ((BigInt(4) << 20) - 1)))
+})
+
 class WithBootROM extends Config((site, here, up) => {
   case BootROMParams => {
     val chipyardBootROM = new File(s"./generators/testchipip/bootrom/bootrom.rv${site(XLen)}.img")
@@ -179,6 +183,19 @@ class FireSimBoomConfig extends Config(
   new freechips.rocketchip.system.BaseConfig
 )
 
+class StrippedBoomConfig extends Config(
+  new WithBootROM ++
+  new WithPeripheryBusFrequency(BigInt(3200000000L)) ++
+  new WithExtMemSize(0x400000000L) ++ // 16GB
+  new WithoutTLMonitors ++
+  new WithBoomL2TLBs(1024) ++
+  new WithoutClockGating ++
+  new WithDefaultMemModel ++
+  new boom.common.WithLargeBooms ++
+  new boom.common.WithNBoomCores(1) ++
+  new WithDefaultFireSimBridges ++
+  new freechips.rocketchip.system.BaseConfig
+)
 // A safer implementation than the one in BOOM in that it
 // duplicates whatever BOOMTileKey.head is present N times. This prevents
 // accidentally (and silently) blowing away configurations that may change the

@@ -72,3 +72,22 @@ trait CanHaveMultiCycleRegfileImp {
   }
 }
 
+
+case class BackingScratchpadParams(
+  base: BigInt,
+  mask: BigInt)
+
+case object BackingScratchpadKey extends Field[Option[BackingScratchpadParams]](None)
+
+/**
+ * Trait to add a scratchpad on the mbus
+ */
+trait CanHaveBackingScratchpad { this: BaseSubsystem =>
+  private val portName = "Backing-Scratchpad"
+
+  val spadOpt = p(BackingScratchpadKey).map { param =>
+    val spad = LazyModule(new TLRAM(address=AddressSet(BigInt(0x80000000L), param.mask), beatBytes=mbus.beatBytes))
+    mbus.toVariableWidthSlave(Some(portName)) { spad.node }
+    spad
+  }
+}

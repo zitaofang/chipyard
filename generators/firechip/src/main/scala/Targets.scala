@@ -88,6 +88,29 @@ class FireSimNoNICModuleImp[+L <: FireSimNoNICDUT](l: L) extends SubsystemModule
 
 class FireSimNoNIC(implicit p: Parameters) extends DefaultFireSimHarness(() => new FireSimNoNICDUT)
 
+class FireSimNoMemDUT(implicit p: Parameters) extends Subsystem
+    with HasHierarchicalBusTopology
+    with CanHaveBackingScratchpad
+    with HasPeripheryBootROM
+    with HasPeripherySerial
+    with HasPeripheryUART
+    with HasPeripheryBlockDevice
+    with HasTraceIO
+{
+  override lazy val module = new FireSimNoMemModuleImp(this)
+}
+
+class FireSimNoMemModuleImp[+L <: FireSimNoMemDUT](l: L) extends SubsystemModuleImp(l)
+    with HasRTCModuleImp
+    with HasPeripheryBootROMModuleImp
+    with HasPeripherySerialModuleImp
+    with HasPeripheryUARTModuleImp
+    with HasPeripheryBlockDeviceModuleImp
+    with HasTraceIOImp
+    with CanHaveMultiCycleRegfileImp
+
+class FireSimNoMem(implicit p: Parameters) extends DefaultFireSimHarness(() => new FireSimNoMemDUT)
+
 class FireSimTraceGenDUT(implicit p: Parameters) extends BaseSubsystem
     with HasHierarchicalBusTopology
     with HasTraceGenTiles
