@@ -21,7 +21,7 @@ import hwacha.{Hwacha}
 import sifive.blocks.devices.gpio._
 import sifive.blocks.devices.uart._
 
-import chipyard.{BuildTop, BuildSystem, ChipTopCaughtReset}
+import chipyard.{BuildTop, BuildSystem, ChipTopAddResetSync}
 
 /**
  * TODO: Why do we need this?
@@ -153,10 +153,9 @@ class WithControlCore extends Config((site, here, up) => {
 
 
 /**
- * Config fragment to use ChipTopCaughtReset as the top module, which adds a reset synchronizer to
- * the top-level reset, allowing it to be asynchronous with the clock.
- * NOTE: You must remember to set TOP=WithChipTopCaughtReset when building with this config
+ * Config fragment to add a reset synchronizer to the top-level reset, allowing it to be asynchronous with the clock.
+ * Recommended for actual tapeouts.
  */
-class WithChipTopCaughtReset extends Config((site, here, up) => {
-  case BuildTop => (p: Parameters) => Module(new ChipTopCaughtReset()(p).suggestName("top"))
+class WithChipTopAddResetSync extends Config((site, here, up) => {
+  case ChipTopAddResetSync => true
 })

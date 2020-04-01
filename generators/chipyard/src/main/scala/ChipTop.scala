@@ -14,6 +14,8 @@ import barstools.iocell.chisel._
 
 case object BuildSystem extends Field[Parameters => RawModule]((p: Parameters) => Module(LazyModule(new DigitalTop()(p)).suggestName("system").module))
 
+case object ChipTopAddResetSync extends Field[Boolean](false)
+
 /**
  * The base class used for building chips. This constructor instantiates a module specified by the BuildSystem parameter,
  * named "system", which is an instance of DigitalTop by default. The default clock and reset for "system" are set by two
@@ -45,13 +47,22 @@ abstract class BaseChipTop()(implicit val p: Parameters) extends RawModule with 
 
 /**
  * A simple clock and reset implementation that punches out clock and reset ports with the same
- * names as the implicit clock and reset for standard Module classes. Reset is synchronous to
- * clock, which may not be a good idea to use for tapeouts.
+ * names as the implicit clock and reset for standard Module classes. If p(ChipTopParams).addResetSync
+ * is false (default), reset is synchronous to clock, which may not be a good idea to use for tapeouts.
+ * Setting this to true will add a ResetCatchAndSync module before reset.
  */
 trait HasChipTopSimpleClockAndReset { this: BaseChipTop =>
 
+  val resetCore = if (p(ChipTopAddResetSync)) {
+    val asyncResetCore = Wire(Input(Bool()))
+    systemReset := ResetCatchAndSync(systemClock, asyncResetCore)
+    asyncResetCore
+  } else {
+    systemReset
+  }
+
   val (clock, systemClockIO) = IOCell.generateIOFromSignal(systemClock, Some("iocell_clock"))
-  val (reset, systemResetIO) = IOCell.generateIOFromSignal(systemReset, Some("iocell_reset"))
+  val (reset, systemResetIO) = IOCell.generateIOFromSignal(resetCore, Some("iocell_reset"))
 
   iocells ++= systemClockIO
   iocells ++= systemResetIO
@@ -68,35 +79,6 @@ trait HasChipTopSimpleClockAndReset { this: BaseChipTop =>
 
 }
 
-/**
- * Variant of HasChipTopSimpleClockAndReset that adds a reset synchronizer so that the top-level reset
- * can be asynchronous with clock, which is useful for tapeout configs.
- */
-trait HasChipTopSimpleClockAndCaughtReset { this: BaseChipTop =>
-
-  val asyncResetCore = Wire(Input(Bool()))
-  systemReset := ResetCatchAndSync(systemClock, asyncResetCore)
-
-  val (clock, systemClockIO) = IOCell.generateIOFromSignal(systemClock, Some("iocell_clock"))
-  val (areset, asyncResetIO) = IOCell.generateIOFromSignal(asyncResetCore, Some("iocell_areset"))
-
-  iocells ++= systemClockIO
-  iocells ++= asyncResetIO
-
-  // Add a TestHarnessFunction that connects clock and areset
-  harnessFunctions += { (th: TestHarness) => {
-    // Connect clock; it's not done implicitly with RawModule
-    clock := th.clock
-    // Connect reset; it's not done implicitly with RawModule
-    // Note that we need to use dutReset, not harnessReset
-    areset := th.dutReset
-    Nil
-  } }
-
-}
-
 class ChipTop()(implicit p: Parameters) extends BaseChipTop()(p)
   with HasChipTopSimpleClockAndReset
 
-class ChipTopCaughtReset()(implicit p: Parameters) extends BaseChipTop()(p)
-  with HasChipTopSimpleClockAndCaughtReset
