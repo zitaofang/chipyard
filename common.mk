@@ -59,10 +59,10 @@ $(FIRRTL_FILE) $(ANNO_FILE): generator_temp
 generator_temp: $(SCALA_SOURCES) $(sim_files) $(EXTRA_GENERATOR_REQS)
 	mkdir -p $(build_dir)
 	cd $(base_dir) && $(SBT) "project $(SBT_PROJECT)" "runMain $(GENERATOR_PACKAGE).Generator \
-		-td $(build_dir) \
-		-n $(long_name) \
-		-T $(MODEL_PACKAGE).$(MODEL) \
-		-UC $(CONFIG_PACKAGE).$(CONFIG)"
+		--target-dir $(build_dir) \
+		--name $(long_name) \
+		--top-module $(MODEL_PACKAGE).$(MODEL) \
+		--underscore-configs $(CONFIG_PACKAGE).$(CONFIG)"
 
 .PHONY: firrtl
 firrtl: $(FIRRTL_FILE)

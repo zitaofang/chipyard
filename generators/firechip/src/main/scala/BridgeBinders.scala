@@ -114,9 +114,12 @@ class WithTiedOffSystemGPIO extends OverrideIOBinder({
 
 class WithTiedOffSystemDebug extends OverrideIOBinder({
   (system: HasPeripheryDebugModuleImp) => {
-    Debug.tieoffDebug(system.debug, Some(system.psd))
+    Debug.tieoffDebug(system.debug, system.resetctrl, Some(system.psd))(system.p)
     // tieoffDebug doesn't actually tie everything off :/
-    system.debug.foreach(_.clockeddmi.foreach({ cdmi => cdmi.dmi.req.bits := DontCare }))
+    system.debug.foreach { d => 
+      d.clockeddmi.foreach({ cdmi => cdmi.dmi.req.bits := DontCare })
+      d.dmactiveAck := DontCare
+    }
     Nil
   }
 })

@@ -7,6 +7,7 @@ import freechips.rocketchip.config.{Field, Parameters}
 import chipyard.iobinders.{TestHarnessFunction}
 import chipyard.config.ConfigValName._
 
+
 // -------------------------------
 // BOOM and/or Rocket Test Harness
 // -------------------------------
@@ -25,9 +26,8 @@ class TestHarness(implicit val p: Parameters) extends Module {
   val dut = p(BuildTop)(p)
   io.success := false.B
 
-  // dutReset can be overridden via a harnessFunction, but by default it is just reset
-  val dutReset = Wire(Bool())
-  dutReset := reset
+  // dutReset assignment can be overridden via a harnessFunction, but by default it is just reset
+  val dutReset = WireDefault(if (p(GlobalResetSchemeKey).pinIsAsync) reset.asAsyncReset else reset)
 
   dut.harnessFunctions.foreach(_(this))
 

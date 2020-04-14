@@ -118,17 +118,28 @@ object AddIOCells {
   /**
    * Add IO cells to a debug module and name the IO ports.
    * @param gpios A PSDIO bundle
+   * @param resetctrlOpt An optional ResetCtrlIO bundle
    * @param debugOpt An optional DebugIO bundle
    * @return Returns a tuple3 of (Top-level PSDIO IO; Optional top-level DebugIO IO; a list of IOCell module references)
    */
-  def debug(psd: PSDIO, debugOpt: Option[DebugIO]): (PSDIO, Option[DebugIO], Seq[IOCell]) = {
-    val (psdPort, psdIOs) = IOCell.generateIOFromSignal(psd, Some("iocell_psd"))
-    val optTuple = debugOpt.map(d => IOCell.generateIOFromSignal(d, Some("iocell_debug")))
-    val debugPortOpt: Option[DebugIO] = optTuple.map(_._1)
-    val debugIOs: Seq[IOCell] = optTuple.map(_._2).toSeq.flatten
+  def debug(psd: PSDIO, resetctrlOpt: Option[ResetCtrlIO], debugOpt: Option[DebugIO])(implicit p: Parameters):
+      (PSDIO, Option[ResetCtrlIO], Option[DebugIO], Seq[IOCell]) = {
+    val (psdPort, psdIOs) = IOCell.generateIOFromSignal(
+      psd, Some("iocell_psd"), abstractResetAsAsync = p(GlobalResetSchemeKey).pinIsAsync)
+    val debugTuple = debugOpt.map(d =>
+      IOCell.generateIOFromSignal(d, Some("iocell_debug"), abstractResetAsAsync = p(GlobalResetSchemeKey).pinIsAsync))
+    val debugPortOpt: Option[DebugIO] = debugTuple.map(_._1)
+    val debugIOs: Seq[IOCell] = debugTuple.map(_._2).toSeq.flatten
     debugPortOpt.foreach(_.suggestName("debug"))
+
+    val resetctrlTuple = resetctrlOpt.map(d =>
+      IOCell.generateIOFromSignal(d, Some("iocell_resetctrl"), abstractResetAsAsync = p(GlobalResetSchemeKey).pinIsAsync))
+    val resetctrlPortOpt: Option[ResetCtrlIO] = resetctrlTuple.map(_._1)
+    val resetctrlIOs: Seq[IOCell] = resetctrlTuple.map(_._2).toSeq.flatten
+    resetctrlPortOpt.foreach(_.suggestName("resetctrl"))
+
     psdPort.suggestName("psd")
-    (psdPort, debugPortOpt, psdIOs ++ debugIOs)
+    (psdPort, resetctrlPortOpt, debugPortOpt, psdIOs ++ debugIOs ++ resetctrlIOs)
   }
 
   /**
@@ -239,30 +250,10 @@ class WithTieOffL2FBusAXI extends OverrideIOBinder({
 
 class WithTiedOffDebug extends OverrideIOBinder({
   (system: HasPeripheryDebugModuleImp) => {
-    // Biancolin: DebugIO has two abstract resets. Since reset inference cannot
-    // span a blackbox (read: IOCell), for the time being bypass IOCell
-    // generation for this interface.
-    //val (psdPort, debugPortOpt, ioCells) = AddIOCells.debug(system.psd, system.debug)
-    val debugPortOpt = system.debug.map { d =>
-      val port = IO(d.cloneType)
-      port.suggestName("debug")
-      d <> port
-      port
-    }
-
-    val resetCtrlOpt = system.resetctrl.map { rc =>
-      val port = IO(rc.cloneType)
-      port.suggestName("resetctrl")
-      port <> rc
-      port
-    }
-
-    val psdPort = IO(system.psd.cloneType)
-    psdPort.suggestName("psd")
-    psdPort <> system.psd
-
+    val (psdPort, resetctrlOpt, debugPortOpt, ioCells) =
+      AddIOCells.debug(system.psd, system.resetctrl, system.debug)(system.p)
     val harnessFn = (th: chipyard.TestHarness) => {
-      Debug.tieoffDebug(debugPortOpt, resetCtrlOpt, Some(psdPort))(system.p)
+      Debug.tieoffDebug(debugPortOpt, resetctrlOpt, Some(psdPort))(system.p)
       // tieoffDebug doesn't actually tie everything off :/
       debugPortOpt.foreach { d =>
         d.clockeddmi.foreach({ cdmi => cdmi.dmi.req.bits := DontCare })
@@ -270,16 +261,17 @@ class WithTiedOffDebug extends OverrideIOBinder({
       }
       Nil
     }
-    Seq((Seq(psdPort) ++ resetCtrlOpt.toSeq ++ debugPortOpt.toSeq, Nil, Some(harnessFn)))
+    Seq((Seq(psdPort) ++ resetctrlOpt ++ debugPortOpt.toSeq, Nil, Some(harnessFn)))
   }
 })
 
 class WithSimDebug extends OverrideIOBinder({
   (system: HasPeripheryDebugModuleImp) => {
-    val (psdPort, debugPortOpt, ioCells) = AddIOCells.debug(system.psd, system.debug)
+    val (psdPort, resetctrlPortOpt, debugPortOpt, ioCells) =
+      AddIOCells.debug(system.psd, system.resetctrl, system.debug)(system.p)
     val harnessFn = (th: chipyard.TestHarness) => {
       val dtm_success = Wire(Bool())
-      Debug.connectDebug(debugPortOpt, None, psdPort, th.clock, th.harnessReset, dtm_success)(system.p)
+      Debug.connectDebug(debugPortOpt, resetctrlPortOpt, psdPort, th.clock, th.harnessReset, dtm_success)(system.p)
       when (dtm_success) { th.success := true.B }
       th.dutReset := th.harnessReset | debugPortOpt.map { debug => AsyncResetReg(debug.ndreset).asBool }.getOrElse(false.B)
       Nil
