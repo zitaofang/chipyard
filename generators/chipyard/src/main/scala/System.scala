@@ -14,7 +14,6 @@ import freechips.rocketchip.devices.tilelink._
 import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.util.{DontTouch}
 
-
 // ---------------------------------------------------------------------
 // Base system that uses the debug test module (dtm) to bringup the core
 // ---------------------------------------------------------------------

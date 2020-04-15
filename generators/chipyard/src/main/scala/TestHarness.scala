@@ -7,7 +7,6 @@ import freechips.rocketchip.config.{Field, Parameters}
 import chipyard.iobinders.{TestHarnessFunction}
 import chipyard.config.ConfigValName._
 
-
 // -------------------------------
 // BOOM and/or Rocket Test Harness
 // -------------------------------

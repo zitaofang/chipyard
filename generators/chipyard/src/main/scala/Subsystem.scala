@@ -64,26 +64,8 @@ trait HasChipyardTiles extends HasTiles
           LazyModule(new ArianeTile(a, crossing, PriorityMuxHartIdFromSeq(arianeTileParams), logicalTreeNode))
         }
       }
-      //val (tile, rocketLogicalTree) = param match {
-      //  case r: RocketTileParams => {
-      //    val t = LazyModule(new RocketTile(r, crossing, PriorityMuxHartIdFromSeq(rocketTileParams), logicalTreeNode))
-      //    (t, t.rocketLogicalTree)
-      //  }
-      //  case b: BoomTileParams => {
-      //    val t = LazyModule(new BoomTile(b, crossing, PriorityMuxHartIdFromSeq(boomTileParams), logicalTreeNode))
-      //    (t, t.rocketLogicalTree) // TODO FIX rocketLogicalTree is not a member of the superclass, both child classes define it separately
-      //  }
-      //  case a: ArianeTileParams => {
-      //    val t = LazyModule(new ArianeTile(a, crossing, PriorityMuxHartIdFromSeq(arianeTileParams), logicalTreeNode))
-      //    (t, t.rocketLogicalTree) // TODO FIX rocketLogicalTree is not a member of the superclass, both child classes define it separately
-      //  }
-      //}
       connectMasterPortsToSBus(tile, crossing)
       connectSlavePortsToCBus(tile, crossing)
-
-      //def treeNode: RocketTileLogicalTreeNode = new RocketTileLogicalTreeNode(rocketLogicalTree.getOMInterruptTargets)
-      //LogicalModuleTree.add(logicalTreeNode, rocketLogicalTree)
-
       connectInterrupts(tile, debugOpt, clintOpt, plicOpt)
 
       tile
