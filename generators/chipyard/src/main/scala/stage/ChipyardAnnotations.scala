@@ -10,10 +10,10 @@ import firrtl.options.{HasShellOptions, ShellOption}
 private[stage] object UnderscoreDelimitedConfigsAnnotation extends HasShellOptions {
   override val options = Seq(
     new ShellOption[String](
-      longOption = "underscore-configs",
+      longOption = "legacy-configs",
       toAnnotationSeq = a => Seq(new ConfigsAnnotation(a.split("_"))),
-      helpText = "A string of underscore delimited configs (configs have decreasing precendence from left to right).",
-      shortOption = Some("UC")
+      helpText = "A string of underscore-delimited configs (configs have decreasing precendence from left to right).",
+      shortOption = Some("LC")
     )
   )
 }

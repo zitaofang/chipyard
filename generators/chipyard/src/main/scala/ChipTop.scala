@@ -46,7 +46,7 @@ sealed trait HasSyncInput { self: GlobalResetScheme =>
 case object GlobalResetSynchronous extends GlobalResetScheme with HasSyncInput
 case object GlobalResetAsynchronous extends GlobalResetScheme with HasAsyncInput
 case object GlobalResetAsynchronousFull extends GlobalResetScheme with HasAsyncInput
-case object GlobalResetSchemeKey extends Field[GlobalResetScheme](GlobalResetAsynchronous)
+case object GlobalResetSchemeKey extends Field[GlobalResetScheme](GlobalResetSynchronous)
 
 
 /**
@@ -67,7 +67,7 @@ abstract class BaseChipTop()(implicit val p: Parameters) extends RawModule with 
   val systemReset = Wire(Input(Reset()))
 
   // The system module specified by BuildSystem
-  val lSystem = p(BuildSystem)(p)
+  val lSystem = p(BuildSystem)(p).suggestName("system")
   val system = withClockAndReset(systemClock, systemReset) { Module(lSystem.module) }
 
   // Call all of the IOBinders and provide them with a default clock and reset
@@ -86,7 +86,7 @@ abstract class BaseChipTop()(implicit val p: Parameters) extends RawModule with 
 /**
  * A simple clock and reset implementation that punches out clock and reset ports with the same
  * names as the implicit clock and reset for standard Module classes. Three basic reset schemes 
- * a provided. See [[GlobalResetSchemey]].
+ * a provided. See [[GlobalResetScheme]].
  */
 trait HasChipTopSimpleClockAndReset { this: BaseChipTop =>
 
