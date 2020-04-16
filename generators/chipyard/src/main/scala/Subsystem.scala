@@ -23,6 +23,7 @@ import freechips.rocketchip.amba.axi4._
 
 import boom.common.{BoomTile, BoomTilesKey, BoomCrossingKey, BoomTileParams}
 import ariane.{ArianeTile, ArianeTilesKey, ArianeCrossingKey, ArianeTileParams}
+import biriscv.{BiRISCVTile, BiRISCVTilesKey, BiRISCVCrossingKey, BiRISCVTileParams}
 
 trait HasChipyardTiles extends HasTiles
   with CanHavePeripheryPLIC
@@ -35,13 +36,15 @@ trait HasChipyardTiles extends HasTiles
   protected val rocketTileParams = p(RocketTilesKey)
   protected val boomTileParams = p(BoomTilesKey)
   protected val arianeTileParams = p(ArianeTilesKey)
+  protected val biriscvTileParams = p(BiRISCVTilesKey)
 
   // crossing can either be per tile or global (aka only 1 crossing specified)
   private val rocketCrossings = perTileOrGlobalSetting(p(RocketCrossingKey), rocketTileParams.size)
   private val boomCrossings = perTileOrGlobalSetting(p(BoomCrossingKey), boomTileParams.size)
   private val arianeCrossings = perTileOrGlobalSetting(p(ArianeCrossingKey), arianeTileParams.size)
+  private val biriscvCrossings = perTileOrGlobalSetting(p(BiRISCVCrossingKey), biriscvTileParams.size)
 
-  val allTilesInfo = (rocketTileParams ++ boomTileParams ++ arianeTileParams) zip (rocketCrossings ++ boomCrossings ++ arianeCrossings)
+  val allTilesInfo = (rocketTileParams ++ boomTileParams ++ arianeTileParams ++ biriscvTileParams) zip (rocketCrossings ++ boomCrossings ++ arianeCrossings ++ biriscvCrossings)
 
   // Make a tile and wire its nodes into the system,
   // according to the specified type of clock crossing.
@@ -63,6 +66,10 @@ trait HasChipyardTiles extends HasTiles
         }
         case a: ArianeTileParams => {
           val t = LazyModule(new ArianeTile(a, crossing, PriorityMuxHartIdFromSeq(arianeTileParams), logicalTreeNode))
+          (t, t.rocketLogicalTree) // TODO FIX rocketLogicalTree is not a member of the superclass, both child classes define it separately
+        }
+        case b: BiRISCVTileParams => {
+          val t = LazyModule(new BiRISCVTile(a, crossing, PriorityMuxHartIdFromSeq(biriscvTileParams), logicalTreeNode))
           (t, t.rocketLogicalTree) // TODO FIX rocketLogicalTree is not a member of the superclass, both child classes define it separately
         }
       }

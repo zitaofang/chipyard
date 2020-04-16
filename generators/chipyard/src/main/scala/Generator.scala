@@ -15,6 +15,7 @@ object Generator extends GeneratorApp {
     TestSuiteHelper.addRocketTestSuites
     TestSuiteHelper.addBoomTestSuites
     TestSuiteHelper.addArianeTestSuites
+    TestSuiteHelper.addBiRISCVTestSuites
 
     // if hwacha parameter exists then generate its tests
     // TODO: find a more elegant way to do this. either through

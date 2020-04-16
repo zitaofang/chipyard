@@ -12,6 +12,7 @@ SOURCE_DIRS = $(addprefix $(base_dir)/,generators sims/firesim/sim)
 SCALA_SOURCES = $(call lookup_srcs,$(SOURCE_DIRS),scala)
 VLOG_SOURCES = $(call lookup_srcs,$(SOURCE_DIRS),sv) $(call lookup_srcs,$(SOURCE_DIRS),v)
 ARIANE_VLOG_SOURCES = $(call lookup_srcs,$(base_dir)/generators/ariane,sv) $(call lookup_srcs,$(base_dir)/generators/ariane,v)
+BIRISCV_VLOG_SOURCES = $(call lookup_srcs,$(base_dir)/generators/biriscv,sv) $(call lookup_srcs,$(base_dir)/generators/biriscv,v)
 
 #########################################################################################
 # rocket and testchipip classes
