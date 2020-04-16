@@ -12,7 +12,7 @@ import chipyard.iobinders.{IOBinders, TestHarnessFunction, IOBinderTuple}
 
 import barstools.iocell.chisel._
 
-case object BuildSystem extends Field[Parameters => LazyModule]((p: Parameters) => LazyModule(new DigitalTop()(p)).suggestName("system"))
+case object BuildSystem extends Field[Parameters => LazyModule]((p: Parameters) => LazyModule(new DigitalTop()(p)))
 
 /**
   * Chipyard provides three baseline, top-level reset schemes, set using the
@@ -29,7 +29,7 @@ case object BuildSystem extends Field[Parameters => LazyModule]((p: Parameters) 
   *
   * 3) Asynchronous Full: The input reset is asynchronous to the input clock,
   *    and is used globally as an async reset. Downstream modules will be emitted
-  *    with asynchronously reset registers.
+  *    with asynchronously reset state elements.
   *
   */
 sealed trait GlobalResetScheme {
@@ -86,7 +86,7 @@ abstract class BaseChipTop()(implicit val p: Parameters) extends RawModule with 
 /**
  * A simple clock and reset implementation that punches out clock and reset ports with the same
  * names as the implicit clock and reset for standard Module classes. Three basic reset schemes 
- * a provided. See [[GlobalResetScheme]].
+ * are provided. See [[GlobalResetScheme]].
  */
 trait HasChipTopSimpleClockAndReset { this: BaseChipTop =>
 
@@ -95,11 +95,11 @@ trait HasChipTopSimpleClockAndReset { this: BaseChipTop =>
     case GlobalResetSynchronous  =>
       IOCell.generateIOFromSignal(systemReset, Some("iocell_reset"))
     case GlobalResetAsynchronousFull =>
-      IOCell.generateIOFromSignal(systemReset, Some("iocell_areset"), abstractResetAsAsync = true)
+      IOCell.generateIOFromSignal(systemReset, Some("iocell_reset"), abstractResetAsAsync = true)
     case GlobalResetAsynchronous =>
       val asyncResetCore = Wire(Input(AsyncReset()))
       systemReset := ResetCatchAndSync(systemClock, asyncResetCore.asBool)
-      IOCell.generateIOFromSignal(asyncResetCore, Some("iocell_areset"), abstractResetAsAsync = true)
+      IOCell.generateIOFromSignal(asyncResetCore, Some("iocell_reset"), abstractResetAsAsync = true)
   }
 
   iocells ++= systemClockIO
