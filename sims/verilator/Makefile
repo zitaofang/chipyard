@@ -130,8 +130,8 @@ $(sim_debug): $(model_mk_debug) $(dramsim_lib)
 #########################################################################################
 .PRECIOUS: $(output_dir)/%.vpd %.vcd
 $(output_dir)/%.vpd: $(output_dir)/% $(sim_debug)
-	rm -f $@.vcd && mkfifo $@.vcd
-	vcd2vpd $@.vcd $@ > /dev/null &
+	rm -f $@.vcd && touch $@.vcd
+	#vcd2vpd $@.vcd $@ > /dev/null &
 	(set -o pipefail && $(sim_debug) $(PERMISSIVE_ON) +max-cycles=$(timeout_cycles) $(SIM_FLAGS) $(VERBOSE_FLAGS) -v$@.vcd $(PERMISSIVE_OFF) $< </dev/null 2> >(spike-dasm > $<.out) | tee $<.log)
 
 #########################################################################################
