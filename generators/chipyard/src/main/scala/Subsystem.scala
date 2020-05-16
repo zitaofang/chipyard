@@ -69,7 +69,7 @@ trait HasChipyardTiles extends HasTiles
           (t, t.rocketLogicalTree) // TODO FIX rocketLogicalTree is not a member of the superclass, both child classes define it separately
         }
         case b: BiRISCVTileParams => {
-          val t = LazyModule(new BiRISCVTile(a, crossing, PriorityMuxHartIdFromSeq(biriscvTileParams), logicalTreeNode))
+          val t = LazyModule(new BiRISCVTile(b, crossing, PriorityMuxHartIdFromSeq(biriscvTileParams), logicalTreeNode))
           (t, t.rocketLogicalTree) // TODO FIX rocketLogicalTree is not a member of the superclass, both child classes define it separately
         }
       }
