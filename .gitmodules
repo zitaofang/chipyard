@@ -131,3 +131,6 @@
 [submodule "generators/riscv-sodor"]
 	path = generators/riscv-sodor
 	url = https://github.com/ucb-bar/riscv-sodor.git
+[submodule "generators/compression-accelerator"]
+	path = generators/compression-accelerator
+	url = git@github.com:zitaofang/compression-accelerator.git
