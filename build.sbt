@@ -174,6 +174,10 @@ lazy val nvdla = (project in file("generators/nvdla"))
   .dependsOn(rocketchip)
   .settings(commonSettings)
 
+lazy val compression_accelerator = (project in file("generators/compression-accelerator"))
+  .dependsOn(icenet)
+  .settings(commonSettings)
+
 lazy val tapeout = conditionalDependsOn(project in file("./tools/barstools/tapeout/"))
   .dependsOn(chisel_testers, chipyard)
   .settings(commonSettings)
