@@ -5,19 +5,20 @@ import chisel3.util.{log2Up}
 
 import freechips.rocketchip.config.{Field, Parameters, Config}
 import freechips.rocketchip.subsystem._
-import freechips.rocketchip.diplomacy.{LazyModule, ValName}
+import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.devices.tilelink.{BootROMLocated}
 import freechips.rocketchip.devices.debug.{Debug, ExportDebug, DebugModuleKey, DMI}
 import freechips.rocketchip.groundtest.{GroundTestSubsystem}
 import freechips.rocketchip.tile._
 import freechips.rocketchip.rocket.{RocketCoreParams, MulDivParams, DCacheParams, ICacheParams}
-import freechips.rocketchip.util.{AsyncResetReg}
+import freechips.rocketchip.util.{AsyncResetReg, Symmetric}
 import freechips.rocketchip.prci._
 
 import testchipip._
 import tracegen.{TraceGenSystem}
 
 import hwacha.{Hwacha}
+import gemmini.{Gemmini, GemminiConfigs}
 
 import boom.common.{BoomTileAttachParams}
 import ariane.{ArianeTileAttachParams}
@@ -105,6 +106,16 @@ class WithMultiRoCCHwacha(harts: Int*) extends Config(
   })
 )
 
+class WithMultiRoCCGemmini(harts: Int*) extends Config((site, here, up) => {
+  case MultiRoCCKey => up(MultiRoCCKey, site) ++ harts.distinct.map { i =>
+    (i -> Seq((p: Parameters) => {
+      implicit val q = p
+      val gemmini = LazyModule(new Gemmini(OpcodeSet.custom3, GemminiConfigs.defaultConfig))
+      gemmini
+    }))
+  }
+})
+
 class WithTraceIO extends Config((site, here, up) => {
   case TilesLocated(InSubsystem) => up(TilesLocated(InSubsystem), site) map {
     case tp: BoomTileAttachParams => tp.copy(tileParams = tp.tileParams.copy(
@@ -172,3 +183,46 @@ class WithPeripheryBusFrequencyAsDefault extends Config((site, here, up) => {
   case DefaultClockFrequencyKey => (site(PeripheryBusKey).dtsFrequency.get / (1000 * 1000)).toDouble
 })
 
+/**
+  * Mixins to specify crossing types between the 5 traditional TL buses
+  *
+  * Note: these presuppose the legacy connections between buses and set
+  * parameters in SubsystemCrossingParams; they may not be resuable in custom
+  * topologies (but you can specify the desired crossings in your topology).
+  *
+  * @param xType The clock crossing type
+  *
+  */
+
+class WithSbusToMbusCrossingType(xType: ClockCrossingType) extends Config((site, here, up) => {
+    case SbusToMbusXTypeKey => xType
+})
+class WithSbusToCbusCrossingType(xType: ClockCrossingType) extends Config((site, here, up) => {
+    case SbusToCbusXTypeKey => xType
+})
+class WithCbusToPbusCrossingType(xType: ClockCrossingType) extends Config((site, here, up) => {
+    case CbusToPbusXTypeKey => xType
+})
+class WithFbusToSbusCrossingType(xType: ClockCrossingType) extends Config((site, here, up) => {
+    case FbusToSbusXTypeKey => xType
+})
+
+/**
+  * Mixins to set the dtsFrequency field of BusParams -- these will percolate its way
+  * up the diplomatic graph to the clock sources.
+  */
+class WithPeripheryBusFrequency(freqMHz: Double) extends Config((site, here, up) => {
+  case PeripheryBusKey => up(PeripheryBusKey).copy(dtsFrequency = Some(BigInt((freqMHz * 1e6).toLong)))
+})
+class WithMemoryBusFrequency(freqMHz: Double) extends Config((site, here, up) => {
+  case MemoryBusKey => up(MemoryBusKey).copy(dtsFrequency = Some(BigInt((freqMHz * 1e6).toLong)))
+})
+class WithSystemBusFrequency(freqMHz: Double) extends Config((site, here, up) => {
+  case SystemBusKey => up(SystemBusKey).copy(dtsFrequency = Some(BigInt((freqMHz * 1e6).toLong)))
+})
+class WithControlBusFrequency(freqMHz: Double) extends Config((site, here, up) => {
+  case ControlBusKey => up(ControlBusKey).copy(dtsFrequency = Some(BigInt((freqMHz * 1e6).toLong)))
+})
+
+class WithRationalMemoryBusCrossing extends WithSbusToMbusCrossingType(RationalCrossing(Symmetric))
+class WithAsynchrousMemoryBusCrossing extends WithSbusToMbusCrossingType(AsynchronousCrossing())
