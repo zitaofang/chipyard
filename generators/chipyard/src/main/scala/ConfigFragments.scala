@@ -226,3 +226,24 @@ class WithControlBusFrequency(freqMHz: Double) extends Config((site, here, up) =
 
 class WithRationalMemoryBusCrossing extends WithSbusToMbusCrossingType(RationalCrossing(Symmetric))
 class WithAsynchrousMemoryBusCrossing extends WithSbusToMbusCrossingType(AsynchronousCrossing())
+
+// User defined
+// Test suite
+import scala.collection.mutable.LinkedHashSet
+import freechips.rocketchip.system.RocketTestSuite
+class CompressionAcceleratorTestSuite(val names: LinkedHashSet[String]) extends RocketTestSuite {
+  val envName = ""
+  val dir = "$(base_dir)/generators/compression-accelerator/tests"
+  val makeTargetName = "compression-tests"
+  def kind = "compression"
+  override def toString = s"$makeTargetName = \\\n" + names.map(n => s"\t$n.riscv").mkString(" \\\n") + postScript
+}
+
+class WithSnappyTest extends Config((site, here, up) => {
+  case TestSuitesKey => (tileParams: Seq[TileParams], suiteHelper: TestSuiteHelper, p: Parameters) => {
+    up(TestSuitesKey).apply(tileParams, suiteHelper, p)
+    val testNames = LinkedHashSet("accum", "blkdev", "charcount", "compression", "noop", "pwm")
+    suiteHelper.addSuite(new CompressionAcceleratorTestSuite(testNames))
+    ""
+  }
+})

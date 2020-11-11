@@ -189,3 +189,9 @@ class LBWIFRocketConfig extends Config(
   new freechips.rocketchip.subsystem.WithNoMemPort ++       // remove AXI4 backing memory
   new freechips.rocketchip.subsystem.WithNBigCores(1) ++
   new chipyard.config.AbstractConfig)
+
+class SnappyAcclRocketConfig extends Config(
+  new chipyard.config.WithSnappyTest ++
+  new snappyaccl.WithCompressionAccelerator ++               // add a compression accelerator
+  new freechips.rocketchip.subsystem.WithNBigCores(1) ++
+  new chipyard.config.AbstractConfig)
